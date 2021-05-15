@@ -1,26 +1,53 @@
-import { ApolloServer, gql } from 'apollo-server';
-import { buildFederatedSchema } from '@apollo/federation';
-
-import { importSchema } from 'graphql-import';
-import config from './config/config.js';
+import amqp from 'amqplib';
 import logger from './utils/logger.js';
-import resolvers from './graphql/resolvers/index.js';
+import config from './config/config.js';
+import ServiceUser from './api/services/serviceUser.js';
 
-const { PORT, PATH_GRAPHQL } = config;
-logger.debug(config, 'Your config:');
+const { MQ_HOST, MQ_QUEUE_USER } = config;
+class Server {
+  async receiveWorkUser() {
+    logger.info('Sendo to MQ, for create user.');
+    let connection;
+    let channel;
+    try {
+      connection = await amqp.connect(`amqp://${MQ_HOST}`);
+      channel = await connection.createChannel();
 
-const typeDefs = gql(importSchema('**/*.gql'));
+      channel.assertQueue(MQ_QUEUE_USER, {
+        durable: true,
+      });
+      channel.prefetch(1);
+      logger.info(' [*] Waiting for messages in %s. ', MQ_QUEUE_USER);
 
-// The ApolloServer constructor requires two parameters: your schema
-// definition and your set of resolvers.
-const server = new ApolloServer({
-  schema: buildFederatedSchema([{ typeDefs, resolvers }]),
-  dataSources: () => ({
-    userAPI: 'desenv',
-  }),
-});
+      const processMessage = async (message) => {
+        try {
+          logger.info(' [x] Received %s', message.content.toString());
+          const userObj = JSON.parse(message.content.toString());
+          const serviceUser = new ServiceUser();
+          const result = await serviceUser.createUser(userObj);
+          logger.info(result, 'Result service');
 
-// The `listen` method launches a web server.
-server.listen({ port: PORT, path: PATH_GRAPHQL }).then(({ url }) => {
-  logger.info(url, 'Running a GraphQL API server at');
-});
+          channel.ack(message);
+        } catch (error) {
+          // handle errors
+        }
+      };
+
+      channel.consume(MQ_QUEUE_USER, processMessage, {
+        // manual acknowledgment mode,
+        // see https://www.rabbitmq.com/confirms.html for details
+        noAck: false,
+      });
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
+  handleError(error) {
+    logger.error(error);
+  }
+}
+
+const server = new Server();
+server.receiveWorkUser();

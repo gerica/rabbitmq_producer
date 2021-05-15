@@ -1,4 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import ExampleService from './exampleService.js';
+import ServiceUser from './serviceUser.js';
 
-export { ExampleService };
+export { ServiceUser };
