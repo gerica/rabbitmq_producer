@@ -5,7 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "pm2-start": "pm2 startOrRestart ecosystem.config.json --watch --only RL-RabbitMQ-Producer-Local",
+    "pm2-stop": "pm2 stop RL-RabbitMQ-Producer-Local",
+    "pm2-kill": "pm2 kill",
+    "pm2-list": "pm2 list",
+    "see-logs": "pm2 logs",
+    "restart-production": "pm2 startOrRestart ecosystem.config.json --only RL-RabbitMQ-Producer",
+    "deploy-production": "pm2 deploy ecosystem.config.json production --only RL-RabbitMQ-Producer",
+    "deploy-production-setup": "pm2 deploy ecosystem.config.json production setup --only RL-RabbitMQ-Producer"
   },
   "keywords": [],
   "author": "",
