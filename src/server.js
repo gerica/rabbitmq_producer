@@ -3,7 +3,14 @@ import logger from './utils/logger.js';
 import config from './config/config.js';
 import MessageService from './api/services/messageService.js';
 
-const { MQ_HOST, MQ_QUEUE_WORK_MSG, MQ_QUEUE_WORK_MSG_RESPONSE } = config;
+const {
+  MQ_HOST,
+  MQ_USER,
+  MQ_PASSQWORD,
+  MQ_QUEUE_WORK_MSG,
+  MQ_QUEUE_WORK_MSG_RESPONSE,
+  //
+} = config;
 const messageService = new MessageService();
 class Server {
   async receiveWorkMsg() {
@@ -63,7 +70,9 @@ class Server {
   }
 
   async createConnection() {
-    const connection = await amqp.connect(`amqp://${MQ_HOST}`);
+    const urlMQ = `amqp://${MQ_USER}:${MQ_PASSQWORD}@${MQ_HOST}`;
+    logger.debug(urlMQ);
+    const connection = await amqp.connect(urlMQ);
     const channel = await connection.createChannel();
     return { connection, channel };
   }
