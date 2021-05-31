@@ -1,4 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import ServiceUser from './serviceUser.js';
+import MessageService from './messageService.js';
 
-export { ServiceUser };
+export { MessageService };
